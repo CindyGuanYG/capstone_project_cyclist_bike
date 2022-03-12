@@ -5,7 +5,7 @@ The data used in the analysis is from the [tripdata](https://divvy-tripdata.s3.a
 ### This capstone project contains the following files:
 * The **R markdown file** for Cyclistic Bike Analysis used data from *January 2021 to February 2022*.
 * A **PDF** that shows the R codes and the outputs.
-* A **report** with summary of the analysis, supportive isualizations and key findings, and recommendations based on data from *January 2021 to February 2022*.
+* A **report** with summary of the analysis, supportive visualizations and key findings, and recommendations based on data from *January 2021 to February 2022*.
 * Some graphs and csv files.
 * **Addition**: SQL file (MySQL) for Cyclistic Bike Analysis used data from *2019 Q2 to 2020 Q1* and its output csv file.
 
