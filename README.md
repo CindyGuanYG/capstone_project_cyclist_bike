@@ -9,5 +9,4 @@ The data used in the analysis is from the [tripdata](https://divvy-tripdata.s3.a
 * Some graphs and csv files.
 * **Addition**: SQL file (MySQL) for Cyclistic Bike Analysis used data from *2019 Q2 to 2020 Q1* and its output csv file.
 
-![Average_Ride_length](https://github.com/CindyGuanYG/capstone_project_cyclistic_bike/blob/main/Average_Ride_Length.jpg)
 ![Number_of_Rides](https://github.com/CindyGuanYG/capstone_project_cyclistic_bike/blob/main/Number_of_Rides.jpg)
