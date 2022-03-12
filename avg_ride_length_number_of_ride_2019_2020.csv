@@ -1,0 +1,15 @@
+member_casual_field,day_of_week,ride_time_in_sec,number_of_ride
+member_user,Monday,832.8360,401577
+casual_user,Monday,3472.7141,79251
+member_user,Tuesday,817.0437,434799
+casual_user,Tuesday,3722.9548,74115
+member_user,Wednesday,808.0642,423147
+casual_user,Wednesday,3923.5163,75738
+member_user,Thursday,827.8996,402334
+casual_user,Thursday,3830.8441,82189
+member_user,Friday,819.5731,377230
+casual_user,Friday,3967.5496,98699
+member_user,Saturday,962.7269,234106
+casual_user,Saturday,3378.8723,161485
+member_user,Sunday,917.9991,229262
+casual_user,Sunday,3642.2315,150392
