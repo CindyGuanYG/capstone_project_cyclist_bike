@@ -1,4 +1,4 @@
-# capstone_project_cyclist_bike
+# capstone project cyclistic bike
 This is a case study from Google Data Analytic Certification program for a fictional bike-share company (Cyclistic) in order to help them attract more riders. In this case study, I identified the trends and differences of casual users and members Cyclistic bike usages to understand why casual riders would buy a membership, and how digital media could affect Cyclistic marketing tactics.
 The data used in the analysis is from the [tripdata](https://divvy-tripdata.s3.amazonaws.com/index.html). The data has been made available by Motivate International Inc. under this [license](https://ride.divvybikes.com/data-license-agreement). 
 
