@@ -1,0 +1,361 @@
+---
+title: "Cyclistic_Bike_Share_Full_Year_Analysis:202102-202201"
+date: "2022/3/1"
+author: "Yaxin Guan"
+output: pdf_document
+---
+
+```{r load required libraries}
+library(tidyverse) # helps import and wrangle data
+library(data.table) # help creates data table and import data
+library(lubridate) # for date functions
+library(ggplot2)  # for data visualization
+# getwd() #displays your working directory
+# setwd("/Users/usernames/Desktop/Divvy_Exercise/csv") #sets your working directory to simplify calls to data
+```
+
+## STEP 1: COLLECT DATA
+```{r import data, include=FALSE}
+Filepath <- "D:/Career/Google Data Analytics Program/Case Study/Google Data Analytics Certification Capstone/Case-Study-1-Cyclistic-Bicycle/"
+```
+
+```{r}
+# Filepath <- "/Users/usernames/Desktop/Divvy_Exercise/"
+trip_202201 <- read_csv(paste0(Filepath,"202201-divvy-tripdata/202201-divvy-tripdata.csv"))
+trip_202102 <- read_csv(paste0(Filepath,"202102-divvy-tripdata/202102-divvy-tripdata.csv"))
+trip_202103 <- read_csv(paste0(Filepath,"202103-divvy-tripdata/202103-divvy-tripdata.csv"))
+trip_202104 <- read_csv(paste0(Filepath,"202104-divvy-tripdata/202104-divvy-tripdata.csv"))
+trip_202105 <- read_csv(paste0(Filepath,"202105-divvy-tripdata/202105-divvy-tripdata.csv"))
+trip_202106 <- read_csv(paste0(Filepath,"202106-divvy-tripdata/202106-divvy-tripdata.csv"))
+trip_202107 <- read_csv(paste0(Filepath,"202107-divvy-tripdata/202107-divvy-tripdata.csv"))
+trip_202108 <- read_csv(paste0(Filepath,"202108-divvy-tripdata/202108-divvy-tripdata.csv"))
+trip_202109 <- read_csv(paste0(Filepath,"202109-divvy-tripdata/202109-divvy-tripdata.csv"))
+trip_202110 <- read_csv(paste0(Filepath,"202110-divvy-tripdata/202110-divvy-tripdata.csv"))
+trip_202111 <- read_csv(paste0(Filepath,"202111-divvy-tripdata/202111-divvy-tripdata.csv"))
+trip_202112 <- read_csv(paste0(Filepath,"202112-divvy-tripdata/202112-divvy-tripdata.csv"))
+```
+
+## STEP 2: CHECK DATA AND COMBINE INTO A SINGLE FILE
+```{r}
+# Check to see if all the CSV files have the same column names.
+colnames(trip_202201)
+colnames(trip_202102)
+colnames(trip_202103)
+colnames(trip_202104)
+colnames(trip_202105)
+colnames(trip_202106)
+colnames(trip_202107)
+colnames(trip_202108)
+colnames(trip_202109)
+colnames(trip_202110)
+colnames(trip_202111)
+colnames(trip_202112)
+```
+
+```{r}
+# Inspect the data frame and look for incongruencies
+str(trip_202201)
+str(trip_202102)
+str(trip_202103)
+str(trip_202104)
+str(trip_202105)
+str(trip_202106)
+str(trip_202107)
+str(trip_202108)
+str(trip_202109)
+str(trip_202110)
+str(trip_202111)
+str(trip_202112)
+```
+
+```{r change the data type for the consistency}
+trip_202201 <-mutate(trip_202201, started_at = mdy_hm(started_at,tz = "UTC"), 
+ended_at = mdy_hm(ended_at, tz = "UTC"))
+```
+
+```{r combine data}
+# Stack individual month's data frames into one big data frame
+all_trips <- bind_rows(trip_202102, trip_202103, trip_202104, trip_202105, trip_202106, trip_202107,trip_202108, trip_202109, trip_202110, trip_202111, trip_202112, trip_202201)
+```
+
+```{r remove some data}
+# Filter out the data that will not be used in the analysis
+all_trips <- all_trips %>%  
+  select(-c(start_lat, start_lng, end_lat, end_lng))
+```
+
+## STEP 3: CLEAN UP AND ADD DATA TO PREPARE FOR ANALYSIS
+```{r}
+# Inspect the new table that has been created
+colnames(all_trips)  # List of column names
+nrow(all_trips)  # rows in data frame
+dim(all_trips)  # Dimensions of the data frame
+head(all_trips)  #See the first 6 rows of data frame.  
+tail(all_trips)
+str(all_trips)  #See list of columns and data types (numeric, character, etc)
+summary(all_trips)  #Statistical summary of data. Mainly for numerics
+```
+
+```{r}
+# Continue the inspection
+table(all_trips$member_casual)
+```
+
+```{r add columns for date information}
+# Add columns that list the date, month, day, and year of each ride
+all_trips$date <- as.Date(all_trips$started_at) #The default format is yyyy-mm-dd
+all_trips$month <- format(as.Date(all_trips$date), "%m")
+all_trips$day <- format(as.Date(all_trips$date), "%d")
+all_trips$year <- format(as.Date(all_trips$date), "%Y")
+all_trips$day_of_week <- format(as.Date(all_trips$date), "%A")
+```
+
+```{r time difference}
+# Add a "ride_length" calculation to all_trips (in seconds)
+all_trips$ride_length <- difftime(all_trips$ended_at,all_trips$started_at)
+```
+
+```{r}
+# Inspect the structure of the columns
+str(all_trips)
+
+# Convert "ride_length" from Factor to numeric so we can run calculations on the data
+is.factor(all_trips$ride_length)
+all_trips$ride_length <- as.numeric(as.character(all_trips$ride_length))
+is.numeric(all_trips$ride_length)
+```
+
+```{r remove "bad" data}
+# The dataframe includes a few hundred entries when bikes were taken out of docks and checked for quality by Divvy or ride_length was negative
+all_trips_v2 <- all_trips[!(all_trips$start_station_name == "HQ QR" | all_trips$ride_length<0),]
+```
+
+```{r}
+# Remove duplicated data
+all_trips_v2 <- all_trips_v2[!duplicated(all_trips_v2$ride_id), ]
+dim(all_trips_v2)
+```
+
+```{r}
+# Rmove any missing data
+all_trips_v2 <-all_trips_v2[complete.cases(all_trips_v2),]
+dim(all_trips_v2)
+```
+
+```{r}
+#Check the data 
+summary(all_trips_v2)
+```
+
+```{r}
+# Remove outliers
+Q1 <- quantile(all_trips_v2$ride_length, prob = c(0.25, 0.75))[1]
+Q3 <- quantile(all_trips_v2$ride_length, prob = c(0.25, 0.75))[2]
+IQR_ride_length <- IQR(all_trips_v2$ride_length)
+
+all_trips_v3 <- all_trips_v2[!(all_trips_v2$ride_length < Q1 - 1.5*IQR_ride_length |all_trips_v2$ride_length > Q3 + 1.5*IQR_ride_length),]
+dim(all_trips_v3)
+```
+
+
+## STEP 4: CONDUCT DESCRIPTIVE ANALYSIS
+```{r}
+# Descriptive analysis on ride_length (all figures in seconds)
+summary(all_trips_v3$ride_length)
+```
+
+```{r}
+# Compare members and casual users
+aggregate(all_trips_v3$ride_length ~ all_trips_v3$member_casual, FUN = mean)
+aggregate(all_trips_v3$ride_length ~ all_trips_v3$member_casual, FUN = median)
+aggregate(all_trips_v3$ride_length ~ all_trips_v3$member_casual, FUN = max)
+aggregate(all_trips_v3$ride_length ~ all_trips_v3$member_casual, FUN = min)
+```
+
+```{r}
+# See the average ride time by each day for members vs casual users
+aggregate(all_trips_v3$ride_length ~ all_trips_v3$member_casual + all_trips_v3$day_of_week, FUN = mean)
+
+# Fix the order of the week's days for version3.
+all_trips_v3$day_of_week <- ordered(all_trips_v3$day_of_week, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+
+# Fix the order of the week's days for version2 for the analysis later.
+all_trips_v2$day_of_week <- ordered(all_trips_v2$day_of_week, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+# Run the average ride time by each day for members vs casual users
+aggregate(all_trips_v3$ride_length ~ all_trips_v3$member_casual + all_trips_v3$day_of_week, FUN = mean)
+```
+
+
+```{r}
+# Visualize the number of rides by rider type
+all_trips_v2 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>% 
+  group_by(member_casual, weekday) %>% 
+  summarise(number_of_rides = n()) %>% 
+  arrange(member_casual, weekday)  %>% 
+  ggplot(aes(x = weekday, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge") + labs(title = "Number of Rides")+
+  theme(plot.title = element_text(hjust = 0.5))+ 
+  geom_text(aes(label=number_of_rides),position=position_dodge(width=0.9), 
+            vjust=-0.25) 
+ggsave("Number_of_Rides.jpg")
+
+```
+
+```{r}
+# Create a visualization for average duration
+all_trips_v3 %>% 
+  mutate(weekday = wday(started_at, label = TRUE)) %>% 
+  group_by(member_casual, weekday) %>% 
+  summarise(average_duration = mean(ride_length)) %>% 
+  arrange(member_casual, weekday)  %>% 
+  ggplot(aes(x = weekday, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") + labs(y = "average duration (in seconds)" ,title = "Average Duration: Casual Users vs. Members")+
+  theme(plot.title = element_text(hjust = 0.5)) + geom_text(aes(label=round(average_duration,2)),position=position_dodge(width=0.9), 
+            vjust=-0.25)
+ggsave("Average_Ride_Length.jpg")
+```
+
+```{r warning=FALSE}
+# Frequent Visited Start Station 
+Freq_start_station <- all_trips_v2 %>%
+  group_by(member_casual,start_station_name) %>% 
+  summarise(count = n()) %>%
+  arrange(-count) 
+Top_10_casual <- Freq_start_station[Freq_start_station$member_casual == "casual",
+                                    ][1:10,]
+Top_10_member <- Freq_start_station[Freq_start_station$member_casual == "member",
+                                    ][1:10,]
+```
+
+```{r fig.align = "center"}
+# Casual Users' Frequent Visited Start Stations Graph
+ggplot(Top_10_casual,aes(x = start_station_name, y = count, 
+                        fill = member_casual))+
+  geom_bar(stat = "identity")+
+  labs(title = "Casual Users' Frequent Visited Start Stations") +
+    theme(axis.text.x =element_text(angle = 90, vjust = 0.5),
+        plot.title = element_text(hjust = 0.5)) +
+  geom_text(aes(label = count), vjust = -0.03)
+ggsave("Frequent Visited Start Startions.jpg")
+```
+
+```{r warning=FALSE}
+# Frequent Visited End Station 
+Freq_end_station <- all_trips_v2 %>%
+  group_by(member_casual,end_station_name) %>% 
+  summarise(count = n()) %>%
+  arrange(-count) 
+Top_10_casual_endstation <- Freq_end_station[Freq_end_station$member_casual == "casual",
+                                    ][1:10,]
+Top_10_member_endstation <- Freq_end_station[Freq_end_station$member_casual == "member",
+                                    ][1:10,]
+ggplot(Top_10_casual_endstation,aes(x = end_station_name, y = count, 
+                        fill = member_casual))+
+  geom_bar(stat = "identity")+
+  labs(title = "Casual Users' Frequent Visited End Stations") +
+    theme(axis.text.x =element_text(angle = 90, vjust = 0.5),
+        plot.title = element_text(hjust = 0.5)) +
+  geom_text(aes(label = count), vjust = -0.03)
+ggsave("Frequent Visited End Startions.jpg")
+```
+
+```{r}
+# Casual users: overlap of stations
+overlap_stations <-Top_10_casual$start_station_name[Top_10_casual$start_station_name %in% Top_10_casual_endstation$end_station_name]
+overlap_stations
+```
+
+```{r fig.align = "center"}
+# Causal users and members' number of rides by months
+all_trips_v2 %>%
+  group_by(month, member_casual) %>%
+  summarise(ride_count = n()) %>%
+  ggplot(aes(x = month, y = ride_count, fill = member_casual)) + 
+  geom_col(position = "dodge") + labs(title = "Number of Rides vs. Months")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_text(aes(label=ride_count),position=position_dodge(width=0.9), 
+            vjust=-0.3, check_overlap = TRUE)
+ggsave("Number of Rides vs. Months.jpg")
+```
+
+```{r fig.align = "center"}
+# Casual users and members' preferences of types of bikes
+all_trips_v2 %>%
+  group_by(rideable_type, member_casual) %>%
+  summarise(ride_count = n()) %>%
+  ggplot(aes(x = rideable_type, y = ride_count, fill = member_casual)) + 
+  geom_col(position = "dodge") + 
+  labs(title = "Casual Users and Members' Preferences of Bikes' Types")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_text(aes(label=ride_count),position=position_dodge(width=0.9), 
+            vjust=-0.25)
+ggsave("Preferences of Bikes' Types.jpg")
+```
+
+```{r fig.align = "center"}
+# Casual users' preference of bikes' types by month
+preference_type_by_month <-all_trips_v2 %>%
+  group_by(month, member_casual, rideable_type) %>%
+  summarise(ride_count = n()) 
+casual_preference_by_month <-preference_type_by_month[preference_type_by_month$member_casual == "casual", ]
+ggplot(data =preference_type_by_month ,aes(x = month, y = ride_count, 
+fill = rideable_type)) + geom_col(position = "dodge") + 
+  scale_fill_manual(values = c("classic_bike" = "chocolate1",
+      "docked_bike" = "darkseagreen", "electric_bike" = "burlywood3"))+
+  labs(title = "Casual Users' Preference of Bikes' Types by Month")+
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+## STEP 5: EXPORT SUMMARY FILE FOR FURTHER ANALYSIS
+```{r}
+# Create a csv file 
+counts <- aggregate(all_trips_v3$ride_length ~ all_trips_v3$member_casual + all_trips_v3$day_of_week, FUN = mean)
+
+write.csv(counts, file = "D:/Career/Google Data Analytics Program/Case Study/Google Data Analytics Certification Capstone/Case-Study-1-Cyclistic-Bicycle/avg_ride_length.csv")
+# Choose the file path 
+```
+
+```{r}
+# Set a data table to extract the needed data for Student T-Test
+data1 <- setDT(all_trips_v3)[,.(average_duration = sum(ride_length)/length(ride_length)), by = .(member_casual, day_of_week)][order(member_casual,day_of_week)]
+
+count_casual <- data1[member_casual == "casual" & order(day_of_week), average_duration]
+count_member <- data1[member_casual == "member" & order(day_of_week), average_duration]
+
+# Check if the variances are equal
+var.test(count_casual,count_member)
+# The result shows that the variance of casual users is different from the variance of member.
+
+#Student T-Test
+t.test(count_casual,count_member, alternative = "greater")
+# significant greater
+
+# Repeat the sames steps above for number of rides by day of weeks
+data2 <- setDT(all_trips_v2)[,.(number_of_ride = .N),
+        by = .(member_casual, day_of_week)][order(member_casual,day_of_week)]
+
+ride_count_casual <- data2[member_casual == "casual"& order(day_of_week), number_of_ride]
+ride_count_member <- data2[member_casual == "member"& order(day_of_week), number_of_ride]
+
+# Check if the variances are equal
+var.test(ride_count_casual,ride_count_member)
+# different variances
+t.test(ride_count_casual,ride_count_member, alternative = "greater")
+#significant greater
+```
+
+```{r}
+# Location
+location_counts<- all_trips_v2 %>%
+  group_by(member_casual,start_station_name) %>% 
+  summarise(number_of_station = n())
+write.csv(location_counts, file = "D:/Career/Google Data Analytics Program/Case Study/Google Data Analytics Certification Capstone/Case-Study-1-Cyclistic-Bicycle/location_counts.csv")
+```
+
+
+
+
+
+
+
